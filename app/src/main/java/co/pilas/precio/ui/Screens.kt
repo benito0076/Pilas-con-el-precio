@@ -43,6 +43,7 @@ import co.pilas.precio.model.Category
 import co.pilas.precio.model.Product
 import co.pilas.precio.model.formatCop
 import co.pilas.precio.model.formatUnitPrice
+import co.pilas.precio.model.isLive
 
 private val ScreenPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
 
@@ -60,6 +61,16 @@ private fun SampleDataBanner() {
     }
 }
 
+@Composable
+private fun LiveStatus(vm: AppViewModel) {
+    val r = vm.liveResult ?: return
+    val text = buildString {
+        append("Precios en vivo de: ${r.answered.joinToString()}.")
+        if (r.failed.isNotEmpty()) append(" No respondieron: ${r.failed.joinToString()}.")
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+}
+
 // ───────────────────────── Buscar ─────────────────────────
 
 @Composable
@@ -68,10 +79,10 @@ fun SearchScreen(vm: AppViewModel, onOpen: (Product) -> Unit) {
     Column(Modifier.fillMaxSize().padding(top = 8.dp)) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Pilas con el precio", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            SampleDataBanner()
+            if (vm.showingLive) LiveStatus(vm) else SampleDataBanner()
             OutlinedTextField(
                 value = vm.query,
-                onValueChange = { vm.query = it },
+                onValueChange = { vm.onQueryChange(it) },
                 label = { Text("Buscar producto o marca") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -96,9 +107,21 @@ fun SearchScreen(vm: AppViewModel, onOpen: (Product) -> Unit) {
                 )
             }
         }
+        val failedAll = vm.liveResult?.let { it.answered.isEmpty() } == true
+        if (failedAll) {
+            Text(
+                "No pudimos consultar las tiendas (sin conexión o sin respuesta). Mostrando precios de ejemplo.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+        if (vm.searching) {
+            Text("Consultando tiendas…", modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        }
         if (results.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No encontramos productos con esa búsqueda.")
+                Text(if (vm.searching) "" else "No encontramos productos con esa búsqueda.")
             }
         } else {
             LazyColumn(contentPadding = ScreenPadding, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -175,7 +198,7 @@ fun ProductScreen(vm: AppViewModel, product: Product, onBack: () -> Unit) {
                 Text("${product.brand} · ${product.presentation}", style = MaterialTheme.typography.titleMedium)
                 Text(product.category.label, style = MaterialTheme.typography.bodySmall)
             }
-            item { SampleDataBanner() }
+            if (!product.isLive) item { SampleDataBanner() }
             item {
                 if (qty == 0) {
                     Button(onClick = { vm.add(product) }, modifier = Modifier.fillMaxWidth()) {
@@ -275,7 +298,7 @@ fun ListScreen(vm: AppViewModel, onOpen: (Product) -> Unit) {
                 TextButton(onClick = { vm.clearList() }) { Text("Vaciar") }
             }
         }
-        item { SampleDataBanner() }
+        if (items.any { !it.isLive }) item { SampleDataBanner() }
         item { Summary(comparison) }
         items(comparison.byStore, key = { it.store.id }) { StoreBasketCard(it) }
         item {

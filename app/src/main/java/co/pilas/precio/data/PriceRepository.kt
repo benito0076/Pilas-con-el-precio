@@ -34,3 +34,14 @@ class SeedPriceRepository : PriceRepository {
 fun String.normalized(): String =
     Normalizer.normalize(trim().lowercase(), Normalizer.Form.NFD)
         .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+
+/** Une los productos en vivo (en memoria) con el catálogo de demostración. */
+class CompositeRepository(
+    private val demo: PriceRepository,
+    private val live: MutableMap<String, LiveProduct>,
+) : PriceRepository {
+    override fun products(): List<Product> = live.values.map { it.product } + demo.products()
+    override fun product(id: String): Product? = live[id]?.product ?: demo.product(id)
+    override fun prices(productId: String): List<StorePrice> =
+        live[productId]?.prices ?: demo.prices(productId)
+}

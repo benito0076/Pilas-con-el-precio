@@ -10,6 +10,7 @@ enum class Category(val label: String, val emoji: String) {
     PANADERIA("Panadería y snacks", "🍞"),
     ASEO_HOGAR("Aseo del hogar", "🧴"),
     ASEO_PERSONAL("Cuidado personal", "🪥"),
+    OTROS("Otros", "🛒"),
 }
 
 /** Unidad base en la que se mide el contenido de un producto. */
@@ -42,6 +43,9 @@ data class Product(
             else -> "$quantity ${unit.shortLabel}"
         }
 }
+
+/** Los productos de precios en vivo tienen id con este prefijo. */
+val Product.isLive: Boolean get() = id.startsWith("live-")
 
 /** Precio en pesos colombianos (COP, sin decimales) de un producto en una tienda. */
 data class StorePrice(val store: Store, val price: Int)
