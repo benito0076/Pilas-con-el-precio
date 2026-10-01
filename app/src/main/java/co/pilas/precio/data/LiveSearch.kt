@@ -43,6 +43,8 @@ class LiveSearch(private val sources: List<PriceSource>) {
                     // búsqueda de una tienda, basta con ajustarla aquí.
                     HtmlSource(store("d1"), "https://domicilios.tiendasd1.com/search?name={q}"),
                     HtmlSource(store("makro"), "https://www.makro.com.co/search?q={q}"),
+                    // Ara solo publica su página de ofertas: aparecen únicamente productos en promoción.
+                    HtmlSource(store("ara"), "https://aratiendas.com/ahorro-ara/"),
                     HtmlSource(store("alkosto"), "https://www.alkosto.com/search?text={q}"),
                 ),
             )

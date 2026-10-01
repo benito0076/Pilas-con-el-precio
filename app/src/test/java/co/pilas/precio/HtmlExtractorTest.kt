@@ -53,4 +53,15 @@ class HtmlExtractorTest {
     fun pageWithoutStructuredDataGivesNothing() {
         assertEquals(0, HtmlExtractor.extract("<html><body>hola</body></html>", d1).size)
     }
+
+    @Test
+    fun filtersFixedPageByQuery() {
+        val html = """<script type="application/ld+json">[
+            {"@type":"Product","name":"Café Sello Rojo 500 g","offers":{"price":17000}},
+            {"@type":"Product","name":"Arroz Diana 1 kg","offers":{"price":4500}}]</script>"""
+        val offers = HtmlExtractor.extract(html, d1)
+        assertEquals(listOf("Arroz Diana 1 kg"), HtmlExtractor.filterByQuery(offers, "ARROZ").map { it.name })
+        assertEquals(listOf("Café Sello Rojo 500 g"), HtmlExtractor.filterByQuery(offers, "cafe").map { it.name })
+        assertEquals(0, HtmlExtractor.filterByQuery(offers, "leche").size)
+    }
 }

@@ -29,7 +29,9 @@ class HtmlSource(override val store: Store, private val searchUrl: String) : Pri
             check(code in 200..299) { "HTTP $code" }
             val offers = HtmlExtractor.extract(conn.inputStream.bufferedReader().use { it.readText() }, store)
             check(offers.isNotEmpty()) { "sin productos reconocibles en la página" }
-            offers.take(limit)
+            // Páginas fijas (sin {q}), como un catálogo de ofertas: se filtra aquí por la búsqueda.
+            val result = if ("{q}" in searchUrl) offers else HtmlExtractor.filterByQuery(offers, query)
+            result.take(limit)
         } finally {
             conn.disconnect()
         }
@@ -51,6 +53,15 @@ object HtmlExtractor {
         }
         // Una página puede repetir el mismo producto en varios bloques.
         return offers.distinctBy { it.name.lowercase() + "|" + it.price }
+    }
+
+    /** Deja las ofertas cuyo nombre o marca contiene todas las palabras de la búsqueda (sin tildes). */
+    fun filterByQuery(offers: List<Offer>, query: String): List<Offer> {
+        val words = query.normalized().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        return offers.filter { o ->
+            val text = "${o.name} ${o.brand}".normalized()
+            words.all { it in text }
+        }
     }
 
     private fun parseJson(text: String): Any? = runCatching {
