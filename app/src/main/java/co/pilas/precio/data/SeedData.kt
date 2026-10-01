@@ -22,6 +22,7 @@ object SeedData {
         Store("d1", "D1", "Tienda de descuento"),
         Store("ara", "Ara", "Tienda de descuento"),
         Store("makro", "Makro", "Mayorista"),
+        Store("alkosto", "Alkosto", "Hipermercado"),
     )
 
     /** Factor de precio y porcentaje de surtido (0-100) de cada tienda. */
@@ -118,7 +119,7 @@ object SeedData {
     /** Precios por producto, ordenados del más barato al más caro. */
     val pricesByProduct: Map<String, List<StorePrice>> = seeds.associate { seed ->
         val list = stores.mapNotNull { store ->
-            val profile = profiles.getValue(store.id)
+            val profile = profiles[store.id] ?: StoreProfile(1.0, 0) // sin datos de demostración
             val h = stableHash(seed.product.id + "|" + store.id)
             if (h % 100 >= profile.assortment) return@mapNotNull null
             val noise = 1.0 + ((h / 100) % 9 - 4) / 100.0 // -4 % .. +4 %

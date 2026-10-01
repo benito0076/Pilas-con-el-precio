@@ -39,6 +39,11 @@ class LiveSearch(private val sources: List<PriceSource>) {
                     VtexSource(store("carulla"), "www.carulla.com"),
                     VtexSource(store("jumbo"), "www.jumbocolombia.com"),
                     VtexSource(store("olimpica"), "www.olimpica.com"),
+                    // Sin API pública: se lee la página de resultados. Si cambia la URL de
+                    // búsqueda de una tienda, basta con ajustarla aquí.
+                    HtmlSource(store("d1"), "https://domicilios.tiendasd1.com/search?name={q}"),
+                    HtmlSource(store("makro"), "https://www.makro.com.co/search?q={q}"),
+                    HtmlSource(store("alkosto"), "https://www.alkosto.com/search?text={q}"),
                 ),
             )
         }
